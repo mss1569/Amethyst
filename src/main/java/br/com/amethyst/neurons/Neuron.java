@@ -12,6 +12,7 @@ import br.com.amethyst.functions.Function;
 public class Neuron {
     public Function function;
     public double delta;
+    public double bias;
     public double[] weigths;
     public double v;
     public double y;
@@ -26,6 +27,7 @@ public class Neuron {
     public Neuron(int sizeLastLayer, Function f) {
         this.weigths = new double[sizeLastLayer];
         this.function = f;
+        this.bias = 1;
         for (int i = 0; i < sizeLastLayer; i++) {
             this.weigths[i] = Math.random() / 10;
         }
@@ -44,6 +46,7 @@ public class Neuron {
         for (int i = 0; i < inputs.length; i++) {
             this.v += inputs[i] * this.weigths[i];
         }
+        this.v += this.bias;
         this.y = this.function.func(this.v);
         return this.y;
     }

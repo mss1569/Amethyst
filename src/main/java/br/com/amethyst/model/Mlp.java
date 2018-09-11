@@ -5,9 +5,6 @@ import br.com.amethyst.layers.HiddenLayer;
 import br.com.amethyst.layers.InputLayer;
 import br.com.amethyst.layers.OutputLayer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Mlp é a classe utilizada
  * para representar uma rede neural
@@ -125,6 +122,11 @@ public class Mlp {
                 this.outputLayer.neurons[j].delta =
                         this.outputLayer.neurons[j].function.funcDerivate(this.outputLayer.neurons[j].v) *
                                 e;
+
+                this.outputLayer.neurons[j].bias += this.rateLearn *
+                        this.outputLayer.neurons[j].bias *
+                        this.outputLayer.neurons[j].delta;
+
                 for (int i = 0; i < this.outputLayer.lastLayer.size; i++) {
                     this.outputLayer.neurons[j].weigths[i] += this.rateLearn *
                             this.outputLayer.lastLayer.getOutput(i) *
@@ -146,6 +148,11 @@ public class Mlp {
                     this.hiddenLayers[l].neurons[j].delta =
                             this.hiddenLayers[l].neurons[j].function.funcDerivate(this.hiddenLayers[l].neurons[j].v) *
                                     s;
+
+                    this.hiddenLayers[l].neurons[j].bias += this.rateLearn *
+                            this.hiddenLayers[l].neurons[j].bias *
+                            this.hiddenLayers[l].neurons[j].delta;
+
                     for (int i = 0; i < this.hiddenLayers[l].lastLayer.size; i++) {
                         this.hiddenLayers[l].neurons[j].weigths[i] += this.rateLearn *
                                 this.hiddenLayers[l].lastLayer.getOutput(i) *
@@ -166,14 +173,11 @@ public class Mlp {
      *               de entrada(s).
      * @param output Matriz contendo os vetore(s)
      *               de saida(s) esperada(s).
+     * @return Erro medio do treino executado.
      * @author Matheus Sena
      */
-    public void train(double[][] inputs, double[][] output) {
-        double erro_medio = backProp(inputs, output);
-        System.out.println("-------------------------------------");
-        System.out.println("Numero de exemplos: " + inputs.length);
-        System.out.println("Erro: " + erro_medio);
-        System.out.println("-------------------------------------");
+    public double train(double[][] inputs, double[][] output) {
+        return backProp(inputs, output);
     }
 
     /**
@@ -184,20 +188,30 @@ public class Mlp {
      * @return Backup de todos os pesos.
      * @author Matheus Sena
      */
-    public List<List<double[]>> getBackup() {
-        List<List<double[]>> r = new ArrayList<List<double[]>>();
+    public double[][][][] getBackup() {
+        double[][][][] r = new double[this.hiddenLayers.length + 1][][][];
+        //[][][][0] pesos
+        //[][][][1][0] bias
+
         for (int l = 0; l < this.hiddenLayers.length; l++) {
-            List<double[]> t = new ArrayList<double[]>();
+            double[][][] t = new double[this.hiddenLayers[l].size][][];
             for (int i = 0; i < this.hiddenLayers[l].size; i++) {
-                t.add(this.hiddenLayers[l].neurons[i].weigths);
+                double[][] f = new double[2][];
+                f[0] = this.hiddenLayers[l].neurons[i].weigths;
+                f[1] = new double[]{this.hiddenLayers[l].neurons[i].bias};
+                t[i] = f;
             }
-            r.add(t);
+            r[l] = t;
         }
-        List<double[]> aa = new ArrayList<double[]>();
+
+        double[][][] o = new double[this.outputLayer.size][][];
         for (int i = 0; i < this.outputLayer.size; i++) {
-            aa.add(this.outputLayer.neurons[i].weigths);
+            double[][] f = new double[2][];
+            f[0] = this.outputLayer.neurons[i].weigths;
+            f[1] = new double[]{this.outputLayer.neurons[i].bias};
+            o[i] = f;
         }
-        r.add(aa);
+        r[r.length - 1] = o;
         return r;
     }
 
@@ -209,16 +223,18 @@ public class Mlp {
      * @param backup Backup de todos os pesos.
      * @author Matheus Sena
      */
-    public void restoreBackup(List<List<double[]>> backup) {
+    public void restoreBackup(double[][][][] backup) {
+        //[][][][0] pesos
+        //[][][][1][0] bias
         for (int l = 0; l < this.hiddenLayers.length; l++) {
-            List<double[]> t = backup.get(l);
             for (int i = 0; i < this.hiddenLayers[l].size; i++) {
-                this.hiddenLayers[l].neurons[i].weigths = t.get(i);
+                this.hiddenLayers[l].neurons[i].weigths = backup[l][i][0];
+                this.hiddenLayers[l].neurons[i].bias = backup[l][i][1][0];
             }
         }
-        List<double[]> aa = backup.get(backup.size() - 1);
         for (int i = 0; i < this.outputLayer.size; i++) {
-            this.outputLayer.neurons[i].weigths = aa.get(i);
+            this.outputLayer.neurons[i].weigths = backup[backup.length - 1][i][0];
+            this.outputLayer.neurons[i].bias = backup[backup.length - 1][i][1][0];
         }
     }
 
