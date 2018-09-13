@@ -17,18 +17,21 @@ public class Mlp {
     private HiddenLayer[] hiddenLayers;
     private InputLayer inputLayer;
     private OutputLayer outputLayer;
+    private double momentum;
 
     /**
      * Construtor Mlp.
      *
      * @param rateLearn Taxa de aprendizagem.
+     * @param momentum  Taxa do termo momentum
      * @param layers    Vetor com a representação do
      *                  numero de layers e aquantidade de neuronios em cada.
      * @param f         Função de ativação da rede.
      * @author Matheus Sena
      */
-    public Mlp(double rateLearn, int[] layers, Function f) {
+    public Mlp(double rateLearn, double momentum, int[] layers, Function f) {
         this.rateLearn = rateLearn;
+        this.momentum = momentum;
         this.hiddenLayers = new HiddenLayer[layers.length - 2];
 
         this.inputLayer = new InputLayer(layers[0]);
@@ -125,12 +128,14 @@ public class Mlp {
 
                 this.outputLayer.neurons[j].bias += this.rateLearn *
                         this.outputLayer.neurons[j].bias *
-                        this.outputLayer.neurons[j].delta;
+                        (this.momentum
+                                * this.outputLayer.neurons[j].delta);
 
                 for (int i = 0; i < this.outputLayer.lastLayer.size; i++) {
                     this.outputLayer.neurons[j].weigths[i] += this.rateLearn *
                             this.outputLayer.lastLayer.getOutput(i) *
-                            this.outputLayer.neurons[j].delta;
+                            (this.momentum
+                                    * this.outputLayer.neurons[j].delta);
                 }
             }
             for (int l = this.hiddenLayers.length - 1; l >= 0; l--) {
@@ -151,12 +156,14 @@ public class Mlp {
 
                     this.hiddenLayers[l].neurons[j].bias += this.rateLearn *
                             this.hiddenLayers[l].neurons[j].bias *
-                            this.hiddenLayers[l].neurons[j].delta;
+                            (this.momentum
+                                    * this.hiddenLayers[l].neurons[j].delta);
 
                     for (int i = 0; i < this.hiddenLayers[l].lastLayer.size; i++) {
                         this.hiddenLayers[l].neurons[j].weigths[i] += this.rateLearn *
                                 this.hiddenLayers[l].lastLayer.getOutput(i) *
-                                this.hiddenLayers[l].neurons[j].delta;
+                                (this.momentum
+                                        * this.hiddenLayers[l].neurons[j].delta);
                     }
                 }
             }
